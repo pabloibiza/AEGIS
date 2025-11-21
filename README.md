@@ -112,7 +112,7 @@ python aegis.py photo.enc photo.keys photo.rsakey
 # Method 2: Using flags
 python aegis.py -d photo.enc -k photo.keys -r photo.rsakey
 
-# Method 3: Auto-find companion files
+# Method 3: Auto-find companion files (same folder)
 python aegis.py -d photo.enc
 # Automatically finds photo.keys and photo.rsakey
 ```
