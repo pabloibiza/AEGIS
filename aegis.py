@@ -18,6 +18,11 @@ FEATURES:
 import os
 import sys
 import platform
+import shutil
+import argparse
+from pathlib import Path
+from typing import Tuple, Optional
+import time
 
 # Detect OS and add appropriate lib folder to path
 _script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -67,10 +72,7 @@ except (ImportError, OSError) as e:
         print("="*70 + "\n")
         sys.exit(1)
 
-import argparse
-from pathlib import Path
-from typing import Tuple, Optional
-import time
+
 
 
 # ============================================================================
@@ -123,62 +125,6 @@ def load_private_key(filepath: str):
     """Loads RSA private key from PEM file"""
     with open(filepath, 'rb') as f:
         return RSA.import_key(f.read())
-
-
-# ============================================================================
-# AES-256-EAX
-# ============================================================================
-
-def aes_eax_encrypt(data: bytes, key: bytes) -> Tuple[bytes, bytes, bytes]:
-    """
-    Encrypt with AES-256-EAX
-
-    Second layer of authenticated encryption with EAX mode.
-
-    Returns:
-        (nonce, ciphertext, tag)
-    """
-    cipher = AES.new(key, AES.MODE_EAX)
-    ciphertext, tag = cipher.encrypt_and_digest(data)
-    
-    return cipher.nonce, ciphertext, tag
-
-
-def aes_eax_decrypt(ciphertext: bytes, key: bytes, nonce: bytes, tag: bytes) -> bytes:
-    """
-    Decrypt with AES-256-EAX
-    """
-    cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
-    plaintext = cipher.decrypt_and_verify(ciphertext, tag)
-    
-    return plaintext
-
-
-# ============================================================================
-# AES-256-GCM
-# ============================================================================
-
-def aes_gcm_encrypt(data: bytes, key: bytes) -> Tuple[bytes, bytes, bytes]:
-    """
-    Encrypt with AES-256-GCM
-
-    Returns:
-        (nonce, ciphertext, tag)
-    """
-    cipher = AES.new(key, AES.MODE_GCM)
-    ciphertext, tag = cipher.encrypt_and_digest(data)
-    
-    return cipher.nonce, ciphertext, tag
-
-
-def aes_gcm_decrypt(ciphertext: bytes, key: bytes, nonce: bytes, tag: bytes) -> bytes:
-    """
-    Decrypt with AES-256-GCM
-    """
-    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
-    plaintext = cipher.decrypt_and_verify(ciphertext, tag)
-    
-    return plaintext
 
 
 # ============================================================================
@@ -633,14 +579,8 @@ def decrypt_file(enc_path: str, keys_path: str, rsakey_path: str,
         print(f"[STEP 6] Saving decrypted file...")
         
         try:
-            # Copy from temp file to final destination
-            with open(temp_plain_path, 'rb') as f_in:
-                with open(output_path, 'wb') as f_out:
-                    while True:
-                        chunk = f_in.read(CHUNK_SIZE)
-                        if not chunk:
-                            break
-                        f_out.write(chunk)
+            # Move temp file to final destination
+            shutil.move(temp_plain_path, output_path)
             
             final_size = os.path.getsize(output_path)
             
