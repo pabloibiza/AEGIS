@@ -126,11 +126,6 @@ python aegis.py -e document.pdf -o /secure/backup/document
 # Custom decryption output
 python aegis.py -d document.enc -o restored.pdf
 
-# Encrypt large files 
-python aegis.py -e large_video.mkv
-# [*] AES-GCM |████████████████| 100.0% Complete | 156.3 MB/s
-```
-
 ---
 
 ## 🎯 Command Reference
