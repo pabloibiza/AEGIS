@@ -17,13 +17,59 @@ FEATURES:
 
 import os
 import sys
+import platform
+
+# Detect OS and add appropriate lib folder to path
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_system = platform.system().lower()
+
+# Select lib folder based on OS
+if _system == 'windows':
+    _lib_path = os.path.join(_script_dir, 'lib')
+elif _system == 'linux':
+    _lib_path = os.path.join(_script_dir, 'lib_linux')
+elif _system == 'darwin':  # macOS
+    _lib_path = os.path.join(_script_dir, 'lib_macos')
+else:
+    _lib_path = None
+
+# Add lib folder to path if exists
+if _lib_path and os.path.exists(_lib_path) and _lib_path not in sys.path:
+    sys.path.insert(0, _lib_path)
+
+# Try to import PyCryptodome, install if missing
+try:
+    from Crypto.Cipher import AES, PKCS1_OAEP
+    from Crypto.PublicKey import RSA
+    from Crypto.Random import get_random_bytes
+    from Crypto.Hash import SHA256
+except (ImportError, OSError) as e:
+    print("\n" + "="*70)
+    print("PyCryptodome not found or incompatible with your system.")
+    print("="*70)
+    print("\nInstalling PyCryptodome automatically...\n")
+    
+    import subprocess
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--user", "pycryptodome"])
+        print("\n" + "="*70)
+        print("Installation successful! Please run the command again.")
+        print("="*70 + "\n")
+        sys.exit(0)
+    except subprocess.CalledProcessError:
+        print("\n" + "="*70)
+        print("ERROR: Automatic installation failed.")
+        print("="*70)
+        print("\nPlease install manually:")
+        print("  pip install pycryptodome")
+        print("\nOr:")
+        print("  python -m pip install pycryptodome")
+        print("="*70 + "\n")
+        sys.exit(1)
+
 import argparse
 from pathlib import Path
 from typing import Tuple, Optional
-from Crypto.Cipher import AES, PKCS1_OAEP
-from Crypto.PublicKey import RSA
-from Crypto.Random import get_random_bytes
-from Crypto.Hash import SHA256
 import time
 
 

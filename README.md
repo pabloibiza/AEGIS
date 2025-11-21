@@ -12,7 +12,7 @@ RSA-4096 + Double Layer AES (AES-256-GCM + AES-256-EAX)
 
 ## 🛡️ What is Aegis?
 
-**Aegis** is a file encryption tool that provides military-level security through a triple-layer encryption architecture.
+**Aegis** is a portable, zero-install file encryption tool that provides military-level security through a triple-layer encryption architecture. Works on Windows, Linux, and macOS out of the box - just download and run!
 
 ### ✨ Key Features
 
@@ -26,11 +26,12 @@ RSA-4096 + Double Layer AES (AES-256-GCM + AES-256-EAX)
 
 ## 🚀 Quick Start
 
-### Dependencies
+### No Installation Required!
+
+Aegis includes all dependencies for **Windows**, **Linux**, and **macOS**. Just run it with Python 3.7+:
 
 ```bash
-# Install required dependency
-pip install pycryptodome
+python aegis.py --version
 ```
 
 ### Encrypt a File
@@ -321,14 +322,18 @@ All 3 files are needed to restore `document.pdf`
 
 ## 📦 Requirements
 
-- Python 3.7 or higher
-- PyCryptodome library
+- **Python 3.7 or higher** (that's it!)
+- No additional installation required
 
-### Installation
+### Included Dependencies
 
-```bash
-pip install pycryptodome
-```
+Aegis comes with PyCryptodome pre-bundled for:
+- ✅ **Windows** (x86_64)
+- ✅ **Linux** (x86_64)
+- ✅ **macOS** (Intel & Apple Silicon - Universal Binary)
+- ⚙️ **Other platforms**: Auto-installs on first run
+
+Simply download and run - the script handles everything automatically!
 
 ---
 
@@ -401,6 +406,3 @@ This software is provided as-is for educational and professional use.
 **Version**: 1.0 (Stable)  
 **Status**: Production Ready  
 **Last Updated**: November 2025
-
-
-
