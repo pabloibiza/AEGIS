@@ -11,7 +11,6 @@ STRUCTURE:
 FEATURES:
 - Files of any size (chunk reading)
 - Unique keys per file (AES-256 + AES-256 + RSA-4096)
-- Decryption in any order (automatic detection)
 - Original name preserved in .enc
 """
 
@@ -131,7 +130,7 @@ def load_private_key(filepath: str):
 # ENCRYPTION AND DECRYPTION FUNCTIONS
 # ============================================================================
 
-def encrypt_file(input_path: str, output_base: Optional[str] = None) -> bool:
+def encrypt_file(input_path: str, output_base: Optional[str] = None, cancel_callback=None) -> bool:
     """
     Encrypts file:
 
@@ -205,6 +204,13 @@ def encrypt_file(input_path: str, output_base: Optional[str] = None) -> bool:
                 start_time = time.time()
                 
                 while True:
+                    # Check for cancellation
+                    if cancel_callback and cancel_callback():
+                        print("\n[!] Operation cancelled by user")
+                        if os.path.exists(temp_gcm_path):
+                            os.unlink(temp_gcm_path)
+                        return False
+                    
                     chunk = f_in.read(CHUNK_SIZE)
                     if not chunk:
                         break
@@ -243,6 +249,15 @@ def encrypt_file(input_path: str, output_base: Optional[str] = None) -> bool:
                 start_time = time.time()
                 
                 while True:
+                    # Check for cancellation
+                    if cancel_callback and cancel_callback():
+                        print("\n[!] Operation cancelled by user")
+                        if os.path.exists(temp_gcm_path):
+                            os.unlink(temp_gcm_path)
+                        if os.path.exists(temp_eax_path):
+                            os.unlink(temp_eax_path)
+                        return False
+                    
                     chunk = f_in.read(CHUNK_SIZE)
                     if not chunk:
                         break
@@ -397,7 +412,7 @@ def identify_file_type(filepath: str) -> str:
 
 
 def decrypt_file(enc_path: str, keys_path: str, rsakey_path: str,
-                output_path: Optional[str] = None) -> bool:
+                output_path: Optional[str] = None, cancel_callback=None) -> bool:
     """
     Decrypts file:
 
@@ -493,6 +508,13 @@ def decrypt_file(enc_path: str, keys_path: str, rsakey_path: str,
             start_time = time.time()
             
             while offset < encrypted_size:
+                # Check for cancellation
+                if cancel_callback and cancel_callback():
+                    print("\n[!] Operation cancelled by user")
+                    if os.path.exists(temp_gcm_path):
+                        os.unlink(temp_gcm_path)
+                    return False
+                
                 chunk_size = min(CHUNK_SIZE, encrypted_size - offset)
                 chunk = eax_ciphertext[offset:offset + chunk_size]
                 
@@ -538,6 +560,15 @@ def decrypt_file(enc_path: str, keys_path: str, rsakey_path: str,
                 start_time = time.time()
                 
                 while True:
+                    # Check for cancellation
+                    if cancel_callback and cancel_callback():
+                        print("\n[!] Operation cancelled by user")
+                        if os.path.exists(temp_gcm_path):
+                            os.unlink(temp_gcm_path)
+                        if os.path.exists(temp_plain_path):
+                            os.unlink(temp_plain_path)
+                        return False
+                    
                     chunk = f_in.read(CHUNK_SIZE)
                     if not chunk:
                         break
