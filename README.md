@@ -18,7 +18,7 @@ RSA-4096 + Double Layer AES (AES-256-GCM + AES-256-EAX)
 
 - 🔒 **Triple-Layer Security**: Dual AES-256 encryption (GCM + EAX) protected by RSA-4096
 - ✅ **Tamper Detection**: Automatically detects any file modifications via authenticated encryption
-- 🔑 **Unique Keys Per File**: Each file gets its own unique encryption keys (no key reuse)
+- 🔑 **Unique Keys Per File**: Each file gets its own unique encryption keys
 - 📁 **Unlimited File Size**: Efficient chunk-based processing handles files of any size
 - 🚀 **High Performance**: Hardware-accelerated AES encryption (AES-NI support)
 
@@ -26,9 +26,9 @@ RSA-4096 + Double Layer AES (AES-256-GCM + AES-256-EAX)
 
 ## 🚀 Quick Start
 
-### No Installation Required!
+### No Installation Required
 
-Aegis includes all dependencies for **Windows**, **Linux**, and **macOS**. Just run it with Python 3.7+:
+Aegis includes all dependencies for **Windows** (available compiled exe), **Linux**, and **macOS**. Just run it with Python 3.7+:
 
 ```bash
 python aegis.py --version
@@ -98,9 +98,6 @@ python aegis.py document.enc document.keys document.rsakey
 ```bash
 # Encrypt any file type
 python aegis.py -e photo.jpg
-python aegis.py -e video.mp4
-python aegis.py -e database.sql
-python aegis.py -e archive.tar.gz
 ```
 
 ### Basic Decryption
@@ -125,6 +122,7 @@ python aegis.py -e document.pdf -o /secure/backup/document
 
 # Custom decryption output
 python aegis.py -d document.enc -o restored.pdf
+```
 
 ---
 
@@ -149,7 +147,7 @@ Pass 3 files in any order - automatic detection handles identification.
 
 ---
 
-## 🔍 Why Triple-Layer Encryption?
+## 🔍 Triple-Layer Encryption
 
 ### Defense in Depth Strategy
 
@@ -184,7 +182,7 @@ Both AES layers provide **AEAD** (Authenticated Encryption with Associated Data)
 - Prevents tampering attacks
 - Authentication tags verify integrity
 
-**If someone modifies even 1 byte:**
+**If 1 byte is modified:**
 ```
 [ERROR] AES-EAX authentication failed - file modified
 ```
@@ -218,40 +216,13 @@ Files are identified by content (magic bytes), not extension:
 
 ### 🚨 Critical Information
 
-1. **WITHOUT the .rsakey file, your data CANNOT be recovered**
-   - There is no backdoor or recovery mechanism
-   - Decryption is cryptographically impossible without it
-
-2. **All 3 files (.enc, .keys, .rsakey) are required for decryption**
+1. **All 3 files (.enc, .keys, .rsakey) are required for decryption**
    - Missing any file = permanent data loss
    - Keep backups in separate secure locations
 
-3. **There is NO password recovery or reset option**
+2. **There is NO password recovery or reset option**
    - This is by design for security
    - No "forgot password" feature exists
-
-4. **Backup all 3 files in secure, separate locations**
-   - Store .rsakey separately from .enc and .keys
-   - Use multiple backup locations (USB, cloud, etc.)
-
----
-
-## 📋 Best Practices
-
-### ✅ DO
-
-- ✅ Backup all 3 files after encryption
-- ✅ Store .rsakey separately from encrypted data (different device/location)
-- ✅ Use strong passwords if you encrypt the .rsakey file separately
-- ✅ Use descriptive filenames for organization
-
-### ❌ DON'T
-
-- ❌ Lose the .rsakey file (= permanent data loss)
-- ❌ Modify encrypted files (authentication will fail)
-- ❌ Store all 3 files in the same location
-- ❌ Use Aegis on files you can't afford to lose without testing first
-- ❌ Share your .rsakey file with anyone
 
 ---
 
@@ -276,9 +247,6 @@ document.pdf  (original, 1.5 MB)
 └── document.rsakey   (RSA private key, ~3.2 KB)
     └── PEM-encoded RSA-4096 private key
 ```
-
-All 3 files are needed to restore `document.pdf`
-
 
 ---
 
@@ -328,14 +296,9 @@ Aegis comes with PyCryptodome pre-bundled for:
 - ✅ **macOS** (Intel & Apple Silicon - Universal Binary)
 - ⚙️ **Other platforms**: Auto-installs on first run
 
-Simply download and run - the script handles everything automatically!
-
 ---
 
 ## ❓ FAQ
-
-**Q: What if I lose the .rsakey file?**  
-A: Your data cannot be recovered. There is no backdoor, recovery method, or password reset. This is by design for security.
 
 **Q: Can I rename the encrypted files?**  
 A: Yes! Aegis uses magic bytes for identification, not filenames. Rename freely.
@@ -393,11 +356,3 @@ This software is provided as-is for educational and professional use.
 > - Store your .rsakey files securely - losing them means permanent data loss
 >
 > **USE AT YOUR OWN RISK**
-
----
-
-## 🎯 Project Status
-
-**Version**: 1.0 (Stable)  
-**Status**: Production Ready  
-**Last Updated**: November 2025
