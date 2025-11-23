@@ -77,7 +77,7 @@ except (ImportError, OSError) as e:
 # ============================================================================
 # CONSTANTS
 # ============================================================================
-VERSION = "Aegis 1.0"
+VERSION = "Aegis 2.0.0"
 
 RSA_KEY_SIZE = 4096
 AES_KEY_SIZE = 32  # 256 bits (inner layer - GCM)
