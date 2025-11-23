@@ -8,8 +8,21 @@ RSA-4096 + Double Layer AES (AES-256-GCM + AES-256-EAX)
 import os
 import sys
 import platform
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+# Try to import tkinter
+try:
+    import tkinter as tk
+    from tkinter import ttk, filedialog, messagebox
+except ImportError:
+    print("\nERROR: tkinter is not installed\n")
+    print("Tkinter is required for the graphical interface.")
+    print("\nInstallation instructions:")
+    print("  • Debian/Ubuntu:  sudo apt-get install python3-tk")
+    print("  • Fedora/RHEL:    sudo dnf install python3-tkinter")
+    print("  • Arch Linux:     sudo pacman -S tk")
+    print("  • macOS:          brew install python-tk")
+    print("  • Windows:        Included with Python installer\n")
+    print("Or use the command-line version: python aegis.py --help\n")
+    sys.exit(1)
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import threading
 from pathlib import Path
