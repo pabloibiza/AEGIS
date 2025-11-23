@@ -1,12 +1,16 @@
-<img src="./aegis.png" alt="Descripción de la imagen" style="width:20%;height:auto;"/>
+<a href="url"><img src="./aegis.png" align="left" height="210" width="210" >
+</a>
 
-**Triple-Layer Encryption System**
+## AEGIS - Triple Layer Encryption System
+
+GUI tool for wireless WEP and WPA/WPA2 pentesting.
 
 RSA-4096 + Double Layer AES (AES-256-GCM + AES-256-EAX)
 
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Security](https://img.shields.io/badge/security-AES--256%20%2B%20RSA--4096-red.svg)]()
+<br/><br/>
 
 ---
 
@@ -388,4 +392,5 @@ This software is provided as-is for educational and professional use.
 > - Store your .rsakey files securely - losing them means permanent data loss
 >
 > **USE AT YOUR OWN RISK**
+
 
