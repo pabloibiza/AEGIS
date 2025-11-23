@@ -1,4 +1,4 @@
-# Aegis 🛡️
+<img src="./aegis.png" alt="Descripción de la imagen" style="width:20%;height:auto;"/>
 
 **Triple-Layer Encryption System**
 
@@ -388,3 +388,4 @@ This software is provided as-is for educational and professional use.
 > - Store your .rsakey files securely - losing them means permanent data loss
 >
 > **USE AT YOUR OWN RISK**
+
