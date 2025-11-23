@@ -1,4 +1,6 @@
-<img src="./aegis.png" alt="Descripción de la imagen" style="width:20%;height:auto;"/>
+<table>
+  <tr>
+    <td valign="top">
 
 **Triple-Layer Encryption System**
 
@@ -7,6 +9,13 @@ RSA-4096 + Double Layer AES (AES-256-GCM + AES-256-EAX)
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Security](https://img.shields.io/badge/security-AES--256%20%2B%20RSA--4096-red.svg)]()
+
+    </td>
+    <td valign="top" width="260">
+      <img src="./aegis.png" alt="AEGIS logo" style="max-width:220px;height:auto;" />
+    </td>
+  </tr>
+</table>
 
 ---
 
