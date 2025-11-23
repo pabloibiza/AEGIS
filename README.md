@@ -14,6 +14,8 @@ RSA-4096 + Double Layer AES (AES-256-GCM + AES-256-EAX)
 
 **Aegis** is a portable, zero-install file encryption tool that provides military-level security through a triple-layer encryption architecture. Works on Windows, Linux, and macOS out of the box - just download and run!
 
+Available in both **Command Line (CLI)** and **Graphical Interface (GUI)** modes.
+
 ### ✨ Key Features
 
 - 🔒 **Triple-Layer Security**: Dual AES-256 encryption (GCM + EAX) protected by RSA-4096
@@ -21,6 +23,7 @@ RSA-4096 + Double Layer AES (AES-256-GCM + AES-256-EAX)
 - 🔑 **Unique Keys Per File**: Each file gets its own unique encryption keys
 - 📁 **Unlimited File Size**: Efficient chunk-based processing handles files of any size
 - 🚀 **High Performance**: Hardware-accelerated AES encryption (AES-NI support)
+- 🖥️ **Dual Interface**: Use CLI for automation or GUI for ease of use
 
 ---
 
@@ -33,6 +36,22 @@ Aegis includes all dependencies for **Windows** (available compiled exe), **Linu
 ```bash
 python aegis.py --version
 ```
+
+### CLI or GUI Mode
+
+Aegis can be used in two ways:
+
+**Command Line Interface (CLI):**
+```bash
+python aegis.py -e document.pdf
+```
+
+**Graphical User Interface (GUI):**
+```bash
+python aegis_gui.py
+```
+
+> **Note for Linux users:** When installing from package manager, the CLI version is `aegis` and the GUI version is `aegis-gui`.
 
 ### Encrypt a File
 
