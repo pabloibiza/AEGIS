@@ -79,7 +79,7 @@ COLORS = {
     'card': '#252526',
     'border': '#3e3e42',
 }
-
+AEGIS_ICON = 'aegis.png'
 
 class VerboseRedirector:
     """Redirects stdout/stderr to the verbose text widget"""
@@ -143,6 +143,10 @@ class AegisGUI:
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
         
+        # Load AEGIS icon
+        self.aegis_icon = None
+        self.load_icon()
+        
         # Configurar estilo
         self.setup_style()
         
@@ -151,6 +155,30 @@ class AegisGUI:
         
         # Centrar ventana
         self.center_window()
+    
+    def load_icon(self):
+        """Load the AEGIS icon from aegis.png"""
+        try:
+            icon_path = os.path.join(_script_dir, AEGIS_ICON)
+            if os.path.exists(icon_path):
+                try:
+                    # Try to use PIL for better quality
+                    from PIL import Image, ImageTk
+                    img = Image.open(icon_path)
+                    # Resize to appropriate size (24x24 pixels for header)
+                    img = img.resize((24, 24), Image.Resampling.LANCZOS)
+                    self.aegis_icon = ImageTk.PhotoImage(img)
+                except ImportError:
+                    # Fallback to tkinter's PhotoImage
+                    self.aegis_icon = tk.PhotoImage(file=icon_path)
+                    # Subsample to reduce size (if needed)
+                    self.aegis_icon = self.aegis_icon.subsample(
+                        max(1, self.aegis_icon.width() // 24),
+                        max(1, self.aegis_icon.height() // 24)
+                    )
+        except Exception as e:
+            print(f"Warning: Could not load aegis.png icon: {e}")
+            self.aegis_icon = None
     
     def setup_style(self):
         """Configure the visual style of the application"""
@@ -191,7 +219,14 @@ class AegisGUI:
         header_frame = ttk.Frame(self.root, style='Main.TFrame')
         header_frame.pack(fill='x', padx=8, pady=(8, 3))
         
-        title_label = ttk.Label(header_frame, text="🛡️ AEGIS - Triple Layer Encryption", style='Title.TLabel')
+        # Title with icon or emoji fallback
+        if self.aegis_icon:
+            title_label = tk.Label(header_frame, text=" AEGIS - Triple Layer Encryption",
+                                  image=self.aegis_icon, compound='left',
+                                  bg=COLORS['bg'], fg='#f0f0f0',
+                                  font=('Segoe UI', 11, 'bold'))
+        else:
+            title_label = ttk.Label(header_frame, text="🛡️ AEGIS - Triple Layer Encryption", style='Title.TLabel')
         title_label.pack(side='left', anchor='w')
         
         # Verbose mode button
