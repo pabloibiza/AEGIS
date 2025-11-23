@@ -12,6 +12,7 @@ import platform
 try:
     import tkinter as tk
     from tkinter import ttk, filedialog, messagebox
+    from tkinterdnd2 import DND_FILES, TkinterDnD
 except ImportError:
     print("\nERROR: tkinter is not installed\n")
     print("Tkinter is required for the graphical interface.")
@@ -23,7 +24,7 @@ except ImportError:
     print("  • Windows:        Included with Python installer\n")
     print("Or use the command-line version: python aegis.py --help\n")
     sys.exit(1)
-from tkinterdnd2 import DND_FILES, TkinterDnD
+
 import threading
 from pathlib import Path
 from typing import Callable, Optional
