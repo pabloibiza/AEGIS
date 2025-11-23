@@ -126,11 +126,24 @@ def load_private_key(filepath: str):
         return RSA.import_key(f.read())
 
 
+def load_public_key(filepath: str):
+    """Loads RSA public key from PEM file"""
+    with open(filepath, 'rb') as f:
+        key_data = f.read()
+        # Try to load as public key first, if fails try as private key and extract public
+        try:
+            return RSA.import_key(key_data)
+        except:
+            # If it's a private key file, extract the public key
+            private_key = RSA.import_key(key_data)
+            return private_key.publickey()
+
+
 # ============================================================================
 # ENCRYPTION AND DECRYPTION FUNCTIONS
 # ============================================================================
 
-def encrypt_file(input_path: str, output_base: Optional[str] = None, cancel_callback=None) -> bool:
+def encrypt_file(input_path: str, output_base: Optional[str] = None, public_key_path: Optional[str] = None, cancel_callback=None) -> bool:
     """
     Encrypts file:
 
@@ -171,15 +184,25 @@ def encrypt_file(input_path: str, output_base: Optional[str] = None, cancel_call
         print(f"[*] Output base name: {os.path.basename(output_base)}")
         print(f"[*] Original name saved: {original_filename.decode('utf-8')}\n")
         
-        # Generate UNIQUE RSA-4096 key pair 
-        print("[STEP 1] Generating UNIQUE RSA-4096 keys for this file")
-        rsa_key = generate_rsa_keypair()
-        
-        # Save RSA private key
-        rsakey_path = output_base + EXTENSION_RSAKEY
-        save_private_key(rsa_key, rsakey_path)
-        print(f"[OK] RSA private key: {rsakey_path}")
-        print(f"[!] IMPORTANT: Save this file securely!\n")
+        # Use custom public key or generate new RSA key pair
+        if public_key_path:
+            print("[STEP 1] Using custom RSA public key for encryption")
+            print(f"[*] Loading public key from: {public_key_path}")
+            rsa_public_key = load_public_key(public_key_path)
+            print(f"[OK] Custom RSA public key loaded (key size: {rsa_public_key.size_in_bits()} bits)")
+            print(f"[!] NOTE: Private key will NOT be saved (you must already have it)\n")
+            rsa_key = None  # No private key to save
+        else:
+            # Generate UNIQUE RSA-4096 key pair 
+            print("[STEP 1] Generating UNIQUE RSA-4096 keys for this file")
+            rsa_key = generate_rsa_keypair()
+            rsa_public_key = rsa_key.publickey()
+            
+            # Save RSA private key
+            rsakey_path = output_base + EXTENSION_RSAKEY
+            save_private_key(rsa_key, rsakey_path)
+            print(f"[OK] RSA private key: {rsakey_path}")
+            print(f"[!] IMPORTANT: Save this file securely!\n")
         
         # Generate unique symmetric keys
         print("[STEP 2] Generating UNIQUE symmetric keys")
@@ -329,16 +352,16 @@ def encrypt_file(input_path: str, output_base: Optional[str] = None, cancel_call
                 os.unlink(temp_eax_path)
         
         # Encrypt symmetric keys with RSA
-        print("[STEP 6] Protecting symmetric keys with RSA-4096...")
+        print("[STEP 6] Protecting symmetric keys with RSA...")
         
         # Combine symmetric keys into one block
         keys_block = aes_key + aes_eax_key  # 64 bytes total (32 + 32)
         
-        # Encrypt block with RSA
-        cipher_rsa = PKCS1_OAEP.new(rsa_key.publickey(), hashAlgo=SHA256)
+        # Encrypt block with RSA public key
+        cipher_rsa = PKCS1_OAEP.new(rsa_public_key, hashAlgo=SHA256)
         encrypted_keys = cipher_rsa.encrypt(keys_block)
         
-        print(f"[OK] Symmetric keys protected with RSA-4096\n")
+        print(f"[OK] Symmetric keys protected with RSA\n")
         
         # Save .KEYS FILE (encrypted keys)
         print("[STEP 7] Creating .keys file with encrypted keys...")
@@ -353,7 +376,6 @@ def encrypt_file(input_path: str, output_base: Optional[str] = None, cancel_call
         # SUMMARY
         enc_size = os.path.getsize(enc_path)
         keys_size = os.path.getsize(keys_path)
-        rsakey_size = os.path.getsize(rsakey_path)
         
         print(f"{'='*70}")
         print(f"  ENCRYPTION COMPLETED")
@@ -365,16 +387,22 @@ def encrypt_file(input_path: str, output_base: Optional[str] = None, cancel_call
         print(f"     - Size: {enc_size:,} bytes\n")
         
         print(f"  2. {os.path.basename(keys_path)}")
-        print(f"     - AES symmetric keys (encrypted with RSA-4096)")
+        print(f"     - AES symmetric keys (encrypted with RSA)")
         print(f"     - Size: {keys_size:,} bytes\n")
         
-        print(f"  3. {os.path.basename(rsakey_path)}")
-        print(f"     - Unique RSA-4096 private key")
-        print(f"     - Size: {rsakey_size:,} bytes\n")
-        
-        print(f"[!] IMPORTANT:")
-        print(f"    - Save {os.path.basename(rsakey_path)} in a SECURE location")
-        print(f"    - Without it, you CANNOT decrypt this file")
+        if rsa_key:  # Only show if we generated a new key
+            rsakey_size = os.path.getsize(rsakey_path)
+            print(f"  3. {os.path.basename(rsakey_path)}")
+            print(f"     - Unique RSA-4096 private key")
+            print(f"     - Size: {rsakey_size:,} bytes\n")
+            
+            print(f"[!] IMPORTANT:")
+            print(f"    - Save {os.path.basename(rsakey_path)} in a SECURE location")
+            print(f"    - Without it, you CANNOT decrypt this file")
+        else:  # Custom key was used
+            print(f"[!] IMPORTANT:")
+            print(f"    - Custom RSA key was used for encryption")
+            print(f"    - Make sure you have the corresponding PRIVATE KEY to decrypt")
         print(f"    - Backup all 3 files\n")
         
         print(f"{'='*70}\n")
@@ -709,11 +737,26 @@ Examples of use:
         document.keys    - Symmetric keys (encrypted with RSA-4096)
         document.rsakey  - RSA-4096 private key
 
+  # Encrypt file with custom RSA public key
+  python aegis.py -e document.pdf -re my_public_key.pem
+
+    Generates:
+        document.enc     - Encrypted data
+        document.keys    - Symmetric keys (encrypted with your RSA public key)
+        (no .rsakey file - you must have the corresponding private key)
+
   # Decrypt file
   python aegis.py -d document.enc document.keys document.rsakey
 
     # Or using flags
   python aegis.py -d document.enc -k document.keys -r document.rsakey
+
+  # Generate RSA-4096 key pair
+  python aegis.py -nk [directory]
+
+    Generates:
+        aegis_private_key.pem  - RSA-4096 private key
+        aegis_public_key.pem   - RSA-4096 public key
 """
     )
     
@@ -723,12 +766,16 @@ Examples of use:
                       help='Encrypt file')
     group.add_argument('-d', '--decrypt', metavar='FILE', 
                       help='Decrypt file (.enc)')
+    group.add_argument('-nk', '--newkeys', metavar='DIR', nargs='?', const='.',
+                      help='Generate new RSA-4096 key pair (optionally specify directory)')
     
     # Options
+    parser.add_argument('-re', '--rsa-encrypt', metavar='RSA_PUB_KEY',
+                       help='RSA public key file to use for encryption (optional)')
     parser.add_argument('-k', '--keys', metavar='KEYS_FILE',
-                       help='Keys file (.keys)')
+                       help='.keys file (for decryption)')
     parser.add_argument('-r', '--rsakey', metavar='RSA_FILE',
-                       help='RSA private key file (.rsakey)')
+                       help='RSA private key file (.rsakey) for decryption')
     parser.add_argument('-o', '--output', metavar='FILE',
                        help='Output file (optional)')
     parser.add_argument('--version', action='version', version=VERSION)
@@ -744,19 +791,71 @@ Examples of use:
     print("  RSA-4096 + Double Layer AES (AES-256-GCM + AES-256-EAX)")
     print("="*70 + "\n")
     
-    # MODE 1: Encrypt with -e
-    if args.encrypt:
+    # MODE 1: Generate RSA key pair with -nk
+    if args.newkeys is not None:
+        output_dir = args.newkeys
+        
+        # Verify directory exists
+        if not os.path.exists(output_dir):
+            print(f"[ERROR] Directory not found: {output_dir}")
+            return 1
+        
+        if not os.path.isdir(output_dir):
+            print(f"[ERROR] Path is not a directory: {output_dir}")
+            return 1
+        
+        print(f"{'='*70}")
+        print(f"  GENERATING RSA-4096 KEY PAIR")
+        print(f"{'='*70}\n")
+        
+        # Generate RSA key pair
+        print("[*] Generating RSA-4096 key pair...")
+        rsa_key = generate_rsa_keypair()
+        
+        # Save private key
+        private_key_path = os.path.join(output_dir, "aegis_private_key.pem")
+        with open(private_key_path, 'wb') as f:
+            f.write(rsa_key.export_key('PEM'))
+        print(f"[OK] Private key saved: {private_key_path}")
+        
+        # Save public key
+        public_key_path = os.path.join(output_dir, "aegis_public_key.pem")
+        with open(public_key_path, 'wb') as f:
+            f.write(rsa_key.publickey().export_key('PEM'))
+        print(f"[OK] Public key saved: {public_key_path}")
+        
+        print(f"\n{'='*70}")
+        print(f"  KEY PAIR GENERATION COMPLETED")
+        print(f"{'='*70}\n")
+        
+        print("[!] IMPORTANT:")
+        print(f"    - Keep the PRIVATE key secure: {os.path.basename(private_key_path)}")
+        print(f"    - Share the PUBLIC key for encryption: {os.path.basename(public_key_path)}")
+        print(f"    - Use with: python aegis.py -e file.txt -re {os.path.basename(public_key_path)}\n")
+        
+        return 0
+    
+    # MODE 2: Encrypt with -e
+    elif args.encrypt:
         input_file = args.encrypt
         
         if not os.path.exists(input_file):
             print(f"\n[ERROR] File not found: {input_file}")
             return 1
         
-        # Encrypt (generates 3 files)
-        success = encrypt_file(input_file, args.output)
+        # Check if custom RSA public key is provided
+        public_key_file = None
+        if args.rsa_encrypt:
+            if not os.path.exists(args.rsa_encrypt):
+                print(f"\n[ERROR] RSA key file not found: {args.rsa_encrypt}")
+                return 1
+            public_key_file = args.rsa_encrypt
+        
+        # Encrypt (generates 2 or 3 files depending on key mode)
+        success = encrypt_file(input_file, args.output, public_key_path=public_key_file)
         return 0 if success else 1
     
-    # MODE 2: Decrypt with -d (with or without -k and -r)
+    # MODE 3: Decrypt with -d (with or without -k and -r)
     elif args.decrypt:
         enc_file = args.decrypt
         
@@ -797,7 +896,7 @@ Examples of use:
         success = decrypt_file(enc_file, keys_file, rsakey_file, args.output)
         return 0 if success else 1
     
-    # MODE 3: Positional files
+    # MODE 4: Positional files
     elif args.files:
         if len(args.files) != 3:
             print(f"\n[ERROR] Exactly 3 files are required")

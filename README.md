@@ -141,6 +141,17 @@ python aegis.py -e document.pdf -o /secure/backup/document
 
 # Custom decryption output
 python aegis.py -d document.enc -o restored.pdf
+
+# Generate RSA-4096 key pair
+python aegis.py -nk
+# Generates aegis_private_key.pem and aegis_public_key.pem in current directory
+
+python aegis.py -nk /path/to/directory
+# Generates keys in specified directory
+
+# Encrypt with custom RSA public key
+python aegis.py -e document.pdf -re my_public_key.pem
+# Only generates .enc and .keys (no .rsakey - you must have the private key)
 ```
 
 ---
@@ -151,8 +162,10 @@ python aegis.py -d document.enc -o restored.pdf
 |---------|-------------|
 | `-e FILE`, `--encrypt FILE` | Encrypt specified file |
 | `-d FILE`, `--decrypt FILE` | Decrypt specified .enc file |
-| `-k FILE`, `--keys FILE` | Specify .keys file (optional for decrypt) |
-| `-r FILE`, `--rsakey FILE` | Specify .rsakey file (optional for decrypt) |
+| `-nk [DIR]`, `--newkeys [DIR]` | Generate RSA-4096 key pair (default: current directory) |
+| `-re FILE`, `--rsa-encrypt FILE` | Custom RSA public key for encryption (optional) |
+| `-k FILE`, `--keys FILE` | .keys file (for decryption) |
+| `-r FILE`, `--rsakey FILE` | RSA private key file (.rsakey) for decryption |
 | `-o FILE`, `--output FILE` | Custom output path |
 | `--version` | Show version information |
 | `-h`, `--help` | Show help message |

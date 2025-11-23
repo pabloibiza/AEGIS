@@ -238,6 +238,15 @@ class AegisGUI:
                                        command=self.toggle_verbose_window)
         self.verbose_button.pack(side='right', padx=5)
         
+        # Generate Keys button
+        self.genkeys_button = tk.Button(header_frame, text="🔑 Gen Keys", 
+                                        bg=COLORS['accent'], fg=COLORS['fg'],
+                                        font=('Segoe UI', 8, 'bold'),
+                                        relief='flat', cursor='hand2',
+                                        padx=10, pady=5,
+                                        command=self.generate_rsa_keys)
+        self.genkeys_button.pack(side='right', padx=5)
+        
         # Notebook (Tabs)
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill='both', expand=True, padx=8, pady=3)
@@ -328,6 +337,34 @@ class AegisGUI:
         info_label = ttk.Label(card, text=info_text, style='Info.TLabel', justify='left')
         info_label.pack(anchor='w', padx=10, pady=3)
         
+        # Optional RSA key section (without frame)
+        rsa_frame = ttk.Frame(card, style='Main.TFrame')
+        rsa_frame.pack(fill='x', padx=10, pady=(8, 4))
+        
+        rsa_label = ttk.Label(rsa_frame, text="Custom RSA key (optional):", 
+                             style='Info.TLabel')
+        rsa_label.pack(side='left', padx=(0, 5))
+        
+        self.encrypt_rsa_label = ttk.Label(rsa_frame, text="None", 
+                                           style='Info.TLabel', foreground=COLORS['fg'])
+        self.encrypt_rsa_label.pack(side='left')
+        
+        select_rsa_button = tk.Button(rsa_frame, text="📂", 
+                                      bg=COLORS['bg'], fg=COLORS['accent'],
+                                      font=('Segoe UI', 8),
+                                      relief='flat', cursor='hand2',
+                                      padx=4, pady=2,
+                                      command=self.select_encrypt_rsa_key)
+        select_rsa_button.pack(side='left', padx=3)
+        
+        self.encrypt_rsa_clear_button = tk.Button(rsa_frame, text="✕", 
+                                                 bg=COLORS['error'], fg=COLORS['fg'],
+                                                 font=('Segoe UI', 7),
+                                                 relief='flat', cursor='hand2',
+                                                 padx=2, pady=0,
+                                                 command=self.clear_encrypt_rsa_key)
+        # Hidden initially
+        
         # Encrypt button
         self.encrypt_button = tk.Button(card, text="🔒 ENCRYPT FILE", 
                                        bg=COLORS['accent'], fg=COLORS['fg'],
@@ -339,8 +376,9 @@ class AegisGUI:
         self.encrypt_button.bind('<Enter>', lambda e: self.encrypt_button.config(bg=COLORS['accent_hover']))
         self.encrypt_button.bind('<Leave>', lambda e: self.encrypt_button.config(bg=COLORS['accent']))
         
-        # Variable for the file
+        # Variables for files
         self.encrypt_file_path = None
+        self.encrypt_rsa_key_path = None
     
     def create_decrypt_tab(self):
         """Create the decryption tab"""
@@ -458,11 +496,26 @@ class AegisGUI:
     def on_encrypt_drop(self, event):
         """Handle the drag and drop event for encryption"""
         files = self.root.tk.splitlist(event.data)
-        if files:
-            file_path = files[0]
-            if os.path.isfile(file_path):
+        if not files:
+            return
+        
+        # Separate files by type
+        for file_path in files:
+            if not os.path.isfile(file_path):
+                continue
+            
+            filename = os.path.basename(file_path)
+            ext = os.path.splitext(filename)[1].lower()
+            
+            # Check if it's a key file
+            if ext in ['.pem', '.key'] or 'key' in filename.lower():
+                # Assume it's an RSA key
+                self.encrypt_rsa_key_path = file_path
+                self.encrypt_rsa_label.config(text=f"✓ {filename}")
+                self.encrypt_rsa_clear_button.pack(side='left', padx=2)
+            else:
+                # Regular file to encrypt
                 self.encrypt_file_path = file_path
-                filename = os.path.basename(file_path)
                 size = os.path.getsize(file_path)
                 size_mb = size / (1024 * 1024)
                 self.encrypt_file_label.config(
@@ -475,6 +528,28 @@ class AegisGUI:
         self.encrypt_file_path = None
         self.encrypt_file_label.config(text="No file selected")
         self.encrypt_clear_button.pack_forget()
+    
+    def select_encrypt_rsa_key(self):
+        """Allow selecting a custom RSA public key for encryption"""
+        file_path = filedialog.askopenfilename(
+            title="Select RSA public key (optional)",
+            filetypes=[
+                ("PEM files", "*.pem"),
+                ("Key files", "*.key"),
+                ("All files", "*.*")
+            ]
+        )
+        if file_path:
+            self.encrypt_rsa_key_path = file_path
+            filename = os.path.basename(file_path)
+            self.encrypt_rsa_label.config(text=f"✓ {filename}")
+            self.encrypt_rsa_clear_button.pack(side='left', padx=2)
+    
+    def clear_encrypt_rsa_key(self):
+        """Clear the selected RSA key"""
+        self.encrypt_rsa_key_path = None
+        self.encrypt_rsa_label.config(text="None")
+        self.encrypt_rsa_clear_button.pack_forget()
     
     def start_encryption(self):
         """Start the encryption process in a separate thread"""
@@ -510,7 +585,11 @@ class AegisGUI:
     def run_encryption(self):
         """Execute encryption (in separate thread)"""
         try:
-            success = aegis.encrypt_file(self.encrypt_file_path, cancel_callback=self.check_cancel)
+            success = aegis.encrypt_file(
+                self.encrypt_file_path, 
+                public_key_path=self.encrypt_rsa_key_path,
+                cancel_callback=self.check_cancel
+            )
             
             # Actualizar UI en el hilo principal
             self.root.after(0, lambda: self.on_encryption_complete(success))
@@ -541,19 +620,31 @@ class AegisGUI:
             keys_file = base_name + aegis.EXTENSION_KEYS
             rsakey_file = base_name + aegis.EXTENSION_RSAKEY
             
-            message = (f"File encrypted successfully!\n\n"
-                      f"Generated files:\n"
-                      f"• {os.path.basename(enc_file)}\n"
-                      f"• {os.path.basename(keys_file)}\n"
-                      f"• {os.path.basename(rsakey_file)}\n\n"
-                      f"⚠️ IMPORTANT: Keep the .rsakey file safe.\n"
-                      f"Without it, you CANNOT decrypt the file.")
+            # Check if custom key was used
+            if self.encrypt_rsa_key_path:
+                message = (f"File encrypted successfully!\n\n"
+                          f"Generated files:\n"
+                          f"• {os.path.basename(enc_file)}\n"
+                          f"• {os.path.basename(keys_file)}\n\n"
+                          f"⚠️ IMPORTANT: Custom RSA key was used.\n"
+                          f"Make sure you have the corresponding private key to decrypt.")
+            else:
+                message = (f"File encrypted successfully!\n\n"
+                          f"Generated files:\n"
+                          f"• {os.path.basename(enc_file)}\n"
+                          f"• {os.path.basename(keys_file)}\n"
+                          f"• {os.path.basename(rsakey_file)}\n\n"
+                          f"⚠️ IMPORTANT: Keep the .rsakey file safe.\n"
+                          f"Without it, you CANNOT decrypt the file.")
             messagebox.showinfo("Encryption Completed", message)
             
-            # Clear selection
+            # Clear selections
             self.encrypt_file_path = None
+            self.encrypt_rsa_key_path = None
             self.encrypt_file_label.config(text="No file selected")
             self.encrypt_clear_button.pack_forget()
+            self.encrypt_rsa_label.config(text="None")
+            self.encrypt_rsa_clear_button.pack_forget()
         else:
             self.status_label.config(text="✗ Encryption error", foreground=COLORS['error'])
             messagebox.showerror("Error", "An error occurred during encryption. Check the console for details.")
@@ -759,6 +850,76 @@ class AegisGUI:
     def check_cancel(self):
         """Check if cancellation was requested"""
         return self.cancel_requested
+    
+    def generate_rsa_keys(self):
+        """Generate RSA-4096 key pair"""
+        # Ask user for directory
+        output_dir = filedialog.askdirectory(title="Select directory to save RSA keys")
+        
+        if not output_dir:
+            return  # User cancelled
+        
+        if self.is_processing:
+            messagebox.showwarning("Warning", "An operation is already in progress")
+            return
+        
+        # Update UI for processing
+        self.is_processing = True
+        self.status_label.config(text="Generating RSA-4096 keys...", foreground=COLORS['warning'])
+        self.progress_bar['mode'] = 'indeterminate'
+        self.progress_bar.start(10)
+        self.genkeys_button.config(state='disabled')
+        
+        # Run in separate thread
+        thread = threading.Thread(target=self.run_generate_keys, args=(output_dir,), daemon=True)
+        thread.start()
+    
+    def run_generate_keys(self, output_dir):
+        """Execute key generation (in separate thread)"""
+        try:
+            # Generate keys
+            print("\n[*] Generating RSA-4096 key pair...")
+            rsa_key = aegis.generate_rsa_keypair()
+            
+            # Save private key
+            private_key_path = os.path.join(output_dir, "aegis_private_key.pem")
+            with open(private_key_path, 'wb') as f:
+                f.write(rsa_key.export_key('PEM'))
+            print(f"[OK] Private key saved: {private_key_path}")
+            
+            # Save public key
+            public_key_path = os.path.join(output_dir, "aegis_public_key.pem")
+            with open(public_key_path, 'wb') as f:
+                f.write(rsa_key.publickey().export_key('PEM'))
+            print(f"[OK] Public key saved: {public_key_path}")
+            
+            # Update UI in main thread
+            self.root.after(0, lambda: self.on_keys_generated(output_dir, True, None))
+            
+        except Exception as e:
+            self.root.after(0, lambda: self.on_keys_generated(output_dir, False, str(e)))
+    
+    def on_keys_generated(self, output_dir, success, error_msg):
+        """Callback when key generation completes"""
+        self.progress_bar.stop()
+        self.progress_bar['mode'] = 'determinate'
+        self.progress_bar['value'] = 100 if success else 0
+        self.is_processing = False
+        self.genkeys_button.config(state='normal')
+        
+        if success:
+            self.status_label.config(text="✓ Keys generated successfully", foreground=COLORS['success'])
+            message = (f"RSA-4096 key pair generated successfully!\n\n"
+                      f"Files created:\n"
+                      f"• aegis_private_key.pem (KEEP SECURE!)\n"
+                      f"• aegis_public_key.pem (share for encryption)\n\n"
+                      f"Location: {output_dir}\n\n"
+                      f"Use the public key to encrypt files with custom keys.")
+            messagebox.showinfo("Keys Generated", message)
+            self.status_label.config(text="Ready", foreground=COLORS['fg'])
+        else:
+            self.status_label.config(text="✗ Key generation failed", foreground=COLORS['error'])
+            messagebox.showerror("Error", f"Failed to generate keys:\n{error_msg}")
     
     def toggle_verbose_window(self):
         """Toggle the verbose mode window"""
