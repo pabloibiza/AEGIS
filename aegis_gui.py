@@ -8,11 +8,10 @@ RSA-4096 + Double Layer AES (AES-256-GCM + AES-256-EAX)
 import os
 import sys
 import platform
-# Try to import tkinter
+# Tkinter is required; tkinterdnd2 only enables drag and drop.
 try:
     import tkinter as tk
     from tkinter import ttk, filedialog, messagebox
-    from tkinterdnd2 import DND_FILES, TkinterDnD
 except ImportError:
     print("\nERROR: tkinter is not installed\n")
     print("Tkinter is required for the graphical interface.")
@@ -24,6 +23,12 @@ except ImportError:
     print("  • Windows:        Included with Python installer\n")
     print("Or use the command-line version: python aegis.py --help\n")
     sys.exit(1)
+
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+except ImportError:
+    DND_FILES = None
+    TkinterDnD = None
 
 import threading
 from pathlib import Path
